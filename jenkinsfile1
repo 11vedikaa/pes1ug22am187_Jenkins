@@ -1,33 +1,52 @@
 pipeline {
     agent any
+
+    environment {
+        BUILD_DIR = 'build'
+    }
+
     stages {
-        stage('Build') {
+        stage('Clone Repository') {
             steps {
-                sh 'mvn clean install'
-                echo 'Build Stage Successful'
+                git branch: 'main', url: 'https://github.com/11vedikaa/pes1ug22am187_Jenkins.git'
             }
         }
-        stage('Test') {
+        stage('Setup') {
             steps {
-                sh 'mvn test'
-                echo 'Test Stage Successful'
+                echo 'Setting up environment...'
+                sh 'mkdir -p $BUILD_DIR'
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
+        }
+        stage('Parallel Tasks') {
+            parallel {
+                stage('Build') {
+                    steps {
+                        echo 'Compiling source code...'
+                        sh 'g++ -o $BUILD_DIR/hello_exec main/hello.cpp'
+                    }
+                }
+                stage('Test') {
+                    steps {
+                        echo 'Running unit tests...'
+                        sh './$BUILD_DIR/hello_exec'
+                    }
                 }
             }
         }
         stage('Deploy') {
             steps {
-                sh 'mvn deploy'
-                echo 'Deployment Successful'
+                echo 'Deploying application...'
+                sh 'echo "Simulated deployment step"'
             }
         }
     }
+    
     post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
         failure {
-            echo 'Pipeline failed'
+            echo 'Pipeline encountered an error!'
         }
     }
 }
